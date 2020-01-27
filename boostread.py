@@ -18,9 +18,9 @@ for root, dirs, files in os.walk("./notes"):
         with open("./notes/" + filename,"r") as file:
             for line in file:
                 if "title: " in line:
-                    outputName = line[8:-1]
+                    outputName = line[8:-2].replace(" ","_")
                 elif "tags" in line and "]" not in line:
-                    folderName  += file.readline().strip()[1:-1] + "/"
+                    folderName  += (file.readline().strip()[1:-1] + "/").replace(" ","_")
                     try:
                         os.mkdir(folderName)
                     except:
