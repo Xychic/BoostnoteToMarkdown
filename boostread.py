@@ -1,8 +1,10 @@
 import os, sys
 from shutil import copyfile
 
+LINK_TO_GITHUB = False
+
 # Replace with actual user name and repo name
-githubLink = "https://github.com/{githubName}/{repoName}/raw/master"
+githubLink = "https://github.com/{githubName}/{repoName}/raw/master/"
 curDir = sys.path[0]
 
 try:
@@ -51,7 +53,6 @@ for root, dirs, files in os.walk(curDir + "/notes"):
                         src = curDir + "/attachments/" + line[i+1:-2]
                         dst = curDir + "/markdown/src" + line[j:-2]
                         copyfile(src, dst)
-
-                        output.write(line[2:i-8] + githubLink + "/src/" + line[j:-2] + ")\n")
+                        output.write(line[2:i-8] + (githubLink if LINK_TO_GITHUB else "../") + "src" + line[j:-2] + ")\n")
                     else:
                         output.write(line[2:])
