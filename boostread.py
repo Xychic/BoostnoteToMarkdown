@@ -52,13 +52,13 @@ for root, dirs, files in os.walk(curDir + "/notes"):
                         src = curDir + "/attachments/" + line[i+1:-2]
                         dst = curDir + "/markdown/src" + line[j:-2]
                         copyfile(src, dst)
-                        output.write(line[2:i-8] + "../src" + line[j:-2] + ")\n")
+                        output.write("\n" + line[2:i-8] + "../src" + line[j:-2] + ")\n")
                     else:
                         output.write(line[2:])
 
 
 if PushToGit:
-    pushQuery = input("Do you want to push to github repo? [y/n]")
+    pushQuery = input("Do you want to push to github repo? [y/n]: ")
     if pushQuery.lower() in ["y","yes"]:
         message = input("Enter a commit message: ")
         os.system("cd {0}/markdown;git add .;git commit -m \"{1}\";git push".format(curDir, message))
