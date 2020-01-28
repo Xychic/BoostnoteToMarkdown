@@ -29,10 +29,11 @@ for root, dirs, files in os.walk(curDir + "/notes"):
         # Open the file and interate over the lines
         with open(curDir + "/notes/" + filename,"r") as file:
             for line in file:
+                line = line.strip()
 
                 # Get the outputname from the title and replace spaces with underscores
                 if "title: " in line:
-                    outputName = line[8:-2].replace(" ", "_")
+                    outputName = line[8:-1].replace(" ", "_")
 
                 # Read the first tag as the subfolder
                 elif "tags" in line and "]" not in line:
@@ -80,14 +81,14 @@ for root, dirs, files in os.walk(curDir + "/notes"):
                         while line[emebededStart] != "/":  emebededStart+=1
                         while line[embededEnd] != "/":   embededEnd-=1
                         # Get the source and destination directories for the file to be embeded
-                        src = curDir + "/attachments/" + line[emebededStart+1:-2]
-                        dst = curDir + "/markdown/src" + line[embededEnd:-2]
+                        src = curDir + "/attachments/" + line[emebededStart+1:-1]
+                        dst = curDir + "/markdown/src" + line[embededEnd:-1]
                         # Copy the file to the markdown/src folder
                         copyfile(src, dst)
                         # Editing the embed reference to be relative to the file 
-                        output.write("\n" + line[2:emebededStart-8] + "../src" + line[embededEnd:-2] + ")\n")
+                        output.write(line[2:emebededStart-8] + "../src" + line[embededEnd:-2] + ")  \n")
                     # If there are no files embeded on the line, just write it to the output
-                    else:   output.write(line[2:])
+                    else:   output.write(line + "  \n")
 
 # If the user wants to push to git
 if PushToGit:
