@@ -11,8 +11,8 @@ DEFAULT_PATH = str(Path.home()) + "/Documents"
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dir", default=None, help="The directory where the program will run from the default path (currently \"{0}\")".format(DEFAULT_PATH))
 parser.add_argument("-f", "--fdir", default=None, help="The full directory to where the program will run")
+parser.add_argument("-q", "--quiet", action="store_true", help="Will not prompt if no tags are given or files are one line long.")
 args = parser.parse_args()
-
 
 # User to get the path of the python file itself and not where it is being executed from
 if args.fdir is not None:
@@ -24,6 +24,7 @@ else:
 
 # Default dict for storing the names of the folders and items
 filesInRepo = defaultdict(list)
+tag = ""
 
 # Creates the directory if it doesn't already exist
 try:    os.mkdir(directory + "/markdown")
@@ -56,14 +57,21 @@ for root, dirs, files in os.walk(directory + "/notes"):
 
                 # Read the first tag as the subfolder
                 elif "tags" in line and "]" not in line:
-                    folderName  += (file.readline().strip()[1:-1] + "/").replace(" ","_")
+                    tag = (file.readline().strip()[1:-1] + "/").replace(" ","_")
+                                    
+                # If the line starts with 'content: ' then the next block is what we need to write
+                elif "content: '''" in line:
+                    if tag == "" and not args.quiet:
+                        tagQuery = input("File: \"{0}\" has no tag.\nDo you want to add a tag? [y/n]: ".format(outputName))
+                        if tagQuery.lower() in ["y","yes"]:
+                            tag = input("Enter a tag: ") +  "/"    
+                    folderName += tag    
+
                     # Create the subfolder if it doesn't exist
                     try: os.mkdir(folderName)
                     # If the file exists, nothing needs to be done
-                    except FileExistsError: pass
-                
-                # If the line starts with 'content: ' then the next block is what we need to write
-                elif "content: '''" in line:
+                    except FileExistsError: pass  
+
                     # Create a file and open it
                     output = open(folderName + outputName + ".md","w")
                     if folderName != directory + "/markdown/":
@@ -84,7 +92,7 @@ for root, dirs, files in os.walk(directory + "/notes"):
                     write = False
                 
                 # If there is only one line of content, let the user know it is not supported
-                elif "content: \"" in line:
+                elif "content: \"" in line and not args.quiet:
                     print("[NOTE] Single line files are not supported. File is:", outputName)
                 
                 # the write flag is true, write the line to the output
@@ -130,7 +138,7 @@ if PUSH_TO_GIT_PROMPT:
                     # Write the subheading
                     README.write("  \n## {0}  \n".format(folder))
                     # Write the filenames as links
-                    for name in items:
+                    for name in sorted(items):
                         README.write("- [{0}](./{1}/{0})  \n".format(name, folder) if folder != "Other_Files" else "- [{0}](./{0})  \n".format(name))
 
         # Get a commit message from the user
