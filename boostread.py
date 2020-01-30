@@ -1,23 +1,37 @@
-import os, sys
+import os, sys, argparse
 from shutil import copyfile
 from collections import defaultdict
+from pathlib import Path
 
 # Flag to give a prompt to push to git
 PUSH_TO_GIT_PROMPT = True
 AUTO_GENERATE_README = True
+DEFAULT_PATH = str(Path.home()) + "/Documents"
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-d", "--dir", default=None, help="The directory where the program will run from the default path (currently \"{0}\")".format(DEFAULT_PATH))
+parser.add_argument("-f", "--fdir", default=None, help="The full directory to where the program will run")
+args = parser.parse_args()
+
 
 # User to get the path of the python file itself and not where it is being executed from
-curDir = sys.path[0]
+if args.fdir is not None:
+    directory = args.fdir
+elif args.dir is not None:
+    directory = DEFAULT_PATH + args.dir
+else:
+    directory = sys.path[0]
+
 # Default dict for storing the names of the folders and items
 filesInRepo = defaultdict(list)
 
 # Creates the directory if it doesn't already exist
-try:    os.mkdir(curDir + "/markdown")
+try:    os.mkdir(directory + "/markdown")
 # If the file exists, nothing needs to be done
 except FileExistsError: pass
 
 # Walking over the directory
-for root, dirs, files in os.walk(curDir + "/notes"):
+for root, dirs, files in os.walk(directory + "/notes"):
     # Iterating over all the filenames
     for filename in files:
         # If the file is not a .cson file, we move on to the next file
@@ -29,10 +43,10 @@ for root, dirs, files in os.walk(curDir + "/notes"):
         # Strip off the .cson extension for the default filename
         outputName = filename[:-4]
         # Set the default output folder as markdown
-        folderName = curDir + "/markdown/"
+        folderName = directory + "/markdown/"
 
         # Open the file and interate over the lines
-        with open(curDir + "/notes/" + filename,"r") as file:
+        with open(directory + "/notes/" + filename,"r") as file:
             for line in file:
                 line = line.strip()
 
@@ -52,8 +66,8 @@ for root, dirs, files in os.walk(curDir + "/notes"):
                 elif "content: '''" in line:
                     # Create a file and open it
                     output = open(folderName + outputName + ".md","w")
-                    if folderName != curDir + "/markdown/":
-                        filesInRepo[folderName[len(curDir + "/markdown/"):-1]].append(outputName)
+                    if folderName != directory + "/markdown/":
+                        filesInRepo[folderName[len(directory + "/markdown/"):-1]].append(outputName)
                     else:
                         filesInRepo["Other_Files"].append(outputName)
                     # Set the write flag to be true
@@ -79,7 +93,7 @@ for root, dirs, files in os.walk(curDir + "/notes"):
                     if ":storage/" in line:
                         
                         # Create a src directory for storing images
-                        try: os.mkdir(curDir + "/markdown/src")
+                        try: os.mkdir(directory + "/markdown/src")
                         # If the directory already exists, nothing needs to be done
                         except FileExistsError: pass
 
@@ -90,8 +104,8 @@ for root, dirs, files in os.walk(curDir + "/notes"):
                         while line[emebededStart] != "/":  emebededStart+=1
                         while line[embededEnd] != "/":   embededEnd-=1
                         # Get the source and destination directories for the file to be embeded
-                        src = curDir + "/attachments/" + line[emebededStart+1:-1]
-                        dst = curDir + "/markdown/src" + line[embededEnd:-1]
+                        src = directory + "/attachments/" + line[emebededStart+1:-1]
+                        dst = directory + "/markdown/src" + line[embededEnd:-1]
                         # Copy the file to the markdown/src folder
                         copyfile(src, dst)
                         # Editing the embed reference to be relative to the file 
@@ -108,7 +122,7 @@ if PUSH_TO_GIT_PROMPT:
         # Check to see if the readme flag is true
         if AUTO_GENERATE_README:
             # Create the readme file
-            with open(curDir + "/markdown/README.md","w") as README:
+            with open(directory + "/markdown/README.md","w") as README:
                 # Write the title
                 README.write("# Folders  \n")
                 # Iterate over all the folders and items that will be uploaded
@@ -116,10 +130,10 @@ if PUSH_TO_GIT_PROMPT:
                     # Write the subheading
                     README.write("  \n## {0}  \n".format(folder))
                     # Write the filenames as links
-                    for name in sorted(items):
-                        README.write("- [{0}](./{1}/{0}.md)  \n".format(name, folder) if folder != "Other_Files" else "- [{0}](./{0}.md)  \n".format(name))
+                    for name in items:
+                        README.write("- [{0}](./{1}/{0})  \n".format(name, folder) if folder != "Other_Files" else "- [{0}](./{0})  \n".format(name))
 
         # Get a commit message from the user
         message = input("Enter a commit message: ")
         # cd into the directory, add all the files, commit with the specified message, and push
-        os.system("cd {0}/markdown;git add .;git commit -m \"{1}\";git push".format(curDir, message))
+        os.system("cd {0}/markdown;git add .;git commit -m \"{1}\";git push".format(directory, message))
