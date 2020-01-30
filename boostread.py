@@ -1,10 +1,15 @@
 import os, sys
 from shutil import copyfile
+from collections import defaultdict
 
 # Flag to give a prompt to push to git
-PushToGit = True
+PUSH_TO_GIT_PROMPT = True
+AUTO_GENERATE_README = True
+
 # User to get the path of the python file itself and not where it is being executed from
 curDir = sys.path[0]
+# Default dict for storing the names of the folders and items
+filesInRepo = defaultdict(list)
 
 # Creates the directory if it doesn't already exist
 try:    os.mkdir(curDir + "/markdown")
@@ -47,6 +52,10 @@ for root, dirs, files in os.walk(curDir + "/notes"):
                 elif "content: '''" in line:
                     # Create a file and open it
                     output = open(folderName + outputName + ".md","w")
+                    if folderName != curDir + "/markdown/":
+                        filesInRepo[folderName[len(curDir + "/markdown/"):-1]].append(outputName)
+                    else:
+                        filesInRepo["Other_Files"].append(outputName)
                     # Set the write flag to be true
                     write = True
                     # Move on to the next line
@@ -62,7 +71,7 @@ for root, dirs, files in os.walk(curDir + "/notes"):
                 
                 # If there is only one line of content, let the user know it is not supported
                 elif "content: \"" in line:
-                    print("[NOTE] Single line files are not supported.")
+                    print("[NOTE] Single line files are not supported. File is:", outputName)
                 
                 # the write flag is true, write the line to the output
                 if write:
@@ -91,10 +100,25 @@ for root, dirs, files in os.walk(curDir + "/notes"):
                     else:   output.write(line + "  \n")
 
 # If the user wants to push to git
-if PushToGit:
+if PUSH_TO_GIT_PROMPT:
     # Check the user actually wants to push to git
     pushQuery = input("Do you want to push to github repo? [y/n]: ")
     if pushQuery.lower() in ["y","yes"]:
+
+        # Check to see if the readme flag is true
+        if AUTO_GENERATE_README:
+            # Create the readme file
+            with open(curDir + "/markdown/README.md","w") as README:
+                # Write the title
+                README.write("# Folders  \n")
+                # Iterate over all the folders and items that will be uploaded
+                for folder, items in filesInRepo.items():
+                    # Write the subheading
+                    README.write("  \n## {0}  \n".format(folder))
+                    # Write the filenames as links
+                    for name in items:
+                        README.write("- [{0}](./{1}/{0})  \n".format(name, folder) if folder != "Other_Files" else "- [{0}](./{0})  \n".format(name))
+
         # Get a commit message from the user
         message = input("Enter a commit message: ")
         # cd into the directory, add all the files, commit with the specified message, and push
