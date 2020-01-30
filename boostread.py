@@ -116,8 +116,8 @@ if PUSH_TO_GIT_PROMPT:
                     # Write the subheading
                     README.write("  \n## {0}  \n".format(folder))
                     # Write the filenames as links
-                    for name in items:
-                        README.write("- [{0}](./{1}/{0})  \n".format(name, folder) if folder != "Other_Files" else "- [{0}](./{0})  \n".format(name))
+                    for name in sorted(items):
+                        README.write("- [{0}](./{1}/{0}.md)  \n".format(name, folder) if folder != "Other_Files" else "- [{0}](./{0}.md)  \n".format(name))
 
         # Get a commit message from the user
         message = input("Enter a commit message: ")
