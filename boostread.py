@@ -1,10 +1,13 @@
 import os, sys
 from shutil import copyfile
+from collections import defaultdict
 
 # Flag to give a prompt to push to git
 PushToGit = True
 # User to get the path of the python file itself and not where it is being executed from
 curDir = sys.path[0]
+
+filesInRepo = defaultdict(list)
 
 # Creates the directory if it doesn't already exist
 try:    os.mkdir(curDir + "/markdown")
@@ -47,6 +50,10 @@ for root, dirs, files in os.walk(curDir + "/notes"):
                 elif "content: '''" in line:
                     # Create a file and open it
                     output = open(folderName + outputName + ".md","w")
+                    if folderName != curDir + "/markdown/":
+                        filesInRepo[folderName[len(curDir + "/markdown/"):-1]].append(outputName)
+                    else:
+                        filesInRepo["Other Files"].append(outputName)
                     # Set the write flag to be true
                     write = True
                     # Move on to the next line
@@ -62,7 +69,7 @@ for root, dirs, files in os.walk(curDir + "/notes"):
                 
                 # If there is only one line of content, let the user know it is not supported
                 elif "content: \"" in line:
-                    print("[NOTE] Single line files are not supported.")
+                    print("[NOTE] Single line files are not supported. File is:", outputName)
                 
                 # the write flag is true, write the line to the output
                 if write:
@@ -94,6 +101,14 @@ for root, dirs, files in os.walk(curDir + "/notes"):
 if PushToGit:
     # Check the user actually wants to push to git
     pushQuery = input("Do you want to push to github repo? [y/n]: ")
+
+    with open(curDir + "/markdown/README.md","w") as README:
+        README.write("# Folders  \n")
+        for folder, items in filesInRepo.items():
+            README.write("  \n## {0}  \n".format(folder))
+            for name in items:
+                README.write("- [{0}](./{1}/{0})  \n".format(name, folder))
+
     if pushQuery.lower() in ["y","yes"]:
         # Get a commit message from the user
         message = input("Enter a commit message: ")
