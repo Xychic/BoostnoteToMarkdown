@@ -144,7 +144,7 @@ for root, dirs, files in os.walk(directory + "/notes"):
                         # Copy the file to the markdown/src folder
                         copyfile(src, dst)
                         # Editing the embed reference to be relative to the file 
-                        output.write(line[:emebededStart-8] + "../src" + line[embededEnd:] + "  \n")
+                        output.write(line[:emebededStart-8] + ("../../src" if tag != "" else "../src") + line[embededEnd:] + "  \n")
                     # If there are no files embeded on the line, just write it to the output
                     else:   output.write(line + "  \n")
 
