@@ -12,6 +12,8 @@ Simply run this program in the directory containing the "notes" folder containin
 -d --dir    Used to specify the path to the directory where the notes folder is, from the users documents folder  
 -f --fdir   Used to specify the full path to the directory where the notes folder is, overwrites whatever is set by -d/--dir  
 -q --quiet  Used to supress warnings about single line files and notes without flags  
+-r --readme     If set will auto-generate a README file with relative links to each file  
+-p --push-to-git    If set will push to a linked GitHub repo or show a prompt to link to an existing repository  
   
 ## Setting up GitHub integration  
 Simply create the repository on github and run the program with the push to GitHub flag as True. If the directory is not set up for GitHub, it will give you a prompt asking you to enter your username, the name of the repository you want to link it to and a commit message.  
