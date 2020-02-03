@@ -6,6 +6,7 @@ from pathlib import Path
 # Getting the default path
 DEFAULT_PATH = str(Path.home()) + "/Documents"
 
+
 # Creates a parser for system arguments
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dir", default=None, help="The directory where the program will run from the default path (currently \"{0}\")".format(DEFAULT_PATH))
@@ -29,8 +30,12 @@ elif args.dir is not None:
 else:
     directory = sys.path[0]
 
+
+# Create a dictionary to find the folder names
 folderNameDict = {}
+# Open the json file that stores the folder names
 config = json.load(open(directory + "/boostnote.json"))
+# Create a dictionary for the folder names and their keys
 for f in config["folders"]:
     folderNameDict[f["key"]] = f["name"]
 
@@ -49,7 +54,6 @@ for root, dirs, files in os.walk(directory + "/notes"):
         # Default tag is empty
         tag = ""
 
-
         # If the file is not a .cson file, we move on to the next file
         if ".cson" not in filename:
             continue    
@@ -67,11 +71,17 @@ for root, dirs, files in os.walk(directory + "/notes"):
                 # Remove weird new line stuff
                 line = line.strip()
 
+                # Get the folder in which to store the note
                 if "folder: " in line:
+                    # Store the subfolder name
                     subFolder = folderNameDict[line[9:-1]] + "/"
+                    # Add the foldername to the path
                     folderName += subFolder
+                    # Create the folder if it doesn't exist
                     try:    os.mkdir(folderName)
+                    # If it does exist, do nothing
                     except FileExistsError: pass
+
                 # Get the outputname from the title and replace spaces with underscores
                 if "title: " in line:
                     outputName = line[8:-1].replace(" ", "_")
@@ -102,6 +112,8 @@ for root, dirs, files in os.walk(directory + "/notes"):
 
                     # Add the file to the directory listing
                     if tag != "":
+
+                        # If the tag is set
                         filesInRepo[subFolder[:-1]][tag[:-1]].append(outputName)
                     else:
                         filesInRepo[subFolder[:-1]]["Other Files"].append(outputName)
