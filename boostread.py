@@ -173,14 +173,14 @@ if AUTO_GENERATE_README:
         # Write the title
         README.write("# Folders  \n")
         # Iterate over all the folders and items that will be uploaded
-        for folder, subfolder in sorted(filesInRepo.items(), alphanumKey):
+        for folder, subfolder in sorted(filesInRepo.items(), key=alphanumKey):
             README.write("  \n## {0}  \n".format(folder))
-            for tag, items in sorted(subfolder.items(), alphanumKey):
+            for tag, items in sorted(subfolder.items(), key=alphanumKey):
                 if tag != DEFAULT_TAG:  
                     README.write("  \n### {0}  \n".format(tag))
                 else:
                     README.write("  \n###  \n")
-                for name in sorted(items, alphanumKey):
+                for name in sorted(items, key=alphanumKey):
                     README.write("- [{0}](./{1}/{2}/{0}.md)  \n".format(name, folder, tag) if tag != DEFAULT_TAG else "- [{0}](./{1}/{0}.md)  \n".format(name, folder))
 
 # If the user wants to push to git
