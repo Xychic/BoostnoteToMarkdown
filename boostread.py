@@ -5,6 +5,7 @@ from pathlib import Path
 
 # Getting the default path
 DEFAULT_PATH = str(Path.home()) + "/Documents"
+DEFAULT_TAG = "\0"*100
 
 
 # Creates a parser for system arguments
@@ -116,7 +117,7 @@ for root, dirs, files in os.walk(directory + "/notes"):
                         # If the tag is set
                         filesInRepo[subFolder[:-1]][tag[:-1]].append(outputName)
                     else:
-                        filesInRepo[subFolder[:-1]]["Other Files"].append(outputName)
+                        filesInRepo[subFolder[:-1]][DEFAULT_TAG].append(outputName)
                     # Set the write flag to be true
                     write = True
                     # Move on to the next line
@@ -171,9 +172,12 @@ if AUTO_GENERATE_README:
         for folder, subfolder in sorted(filesInRepo.items()):
             README.write("  \n## {0}  \n".format(folder))
             for tag, items in sorted(subfolder.items()):
-                README.write("  \n### {0}  \n".format(tag))
+                if tag != DEFAULT_TAG:  
+                    README.write("  \n### {0}  \n".format(tag))
+                else:
+                    README.write("  \n###  \n")
                 for name in sorted(items):
-                    README.write("- [{0}](./{1}/{2}/{0}.md)  \n".format(name, folder, tag) if tag != "Other Files" else "- [{0}](./{1}/{0}.md)  \n".format(name, folder))
+                    README.write("- [{0}](./{1}/{2}/{0}.md)  \n".format(name, folder, tag) if tag != DEFAULT_TAG else "- [{0}](./{1}/{0}.md)  \n".format(name, folder))
 
 # If the user wants to push to git
 if PUSH_TO_GIT_PROMPT:
