@@ -1,19 +1,17 @@
-# BoostnoteToMarkdown
-Simple python program for extracting the markdown file from boostnotes .cson files
-
-Just save and run this program in the same directory as boostnotes "notes" folder.
-
-Will create a folder called markdown and will use the first tag as the subfolder
-
-Has the option to automatically commit to github if ssh keys are set up and the markdown folder is set up as a git repo
-
-If you choose to automatically commit to github and the AUTO_GENERATE_README flag is true will create a readme to navigate to the files
-
-## Flags
-usage: boostread.py [-h] [-d DIR] [-f FDIR] [-q]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -d DIR, --dir DIR     The directory where the program will run from the default path (currently "/home/$USER/Documents")
-  -f FDIR, --fdir FDIR  The full directory to where the program will run
-  -q, --quiet           Will not prompt if no tags are given or files are one line long. 
+# Boostnote to Markdown  
+  
+## What the script does  
+This program can convert a all your boostnote notes to raw markdown (.md) files. It will copy any images into a "src" folder and change all the references to be relative, which means there is one folder for all your notes and media embedded in the notes.  
+  
+## What the script doesn't do  
+Unfortunately it cannot make your notes look good. It simply copies whatever formatting you have applied yourself.  
+  
+## Usage  
+Simply run this program in the directory containing the "notes" folder containing the ".cson" files boostnote has created. It will create a new directory called "markdown" which will store all the notes it has converted. The first tag any note has will be used as the name of the subfolder to store the note. If no tags are set, the user will be asked if they want to give a tag, if they don't then it will not be stored in any subfolders and simply placed in the default directory.  
+# Possible flags  
+-d --dir    Used to specify the path to the directory where the notes folder is, from the users documents folder  
+-f --fdir   Used to specify the full path to the directory where the notes folder is, overwrites whatever is set by -d/--dir  
+-q --quiet  Used to supress warnings about single line files and notes without flags  
+  
+## Setting up GitHub integration  
+Simply create the repository on github and run the program with the push to GitHub flag as True. If the directory is not set up for GitHub, it will give you a prompt asking you to enter your username, the name of the repository you want to link it to and a commit message.  
