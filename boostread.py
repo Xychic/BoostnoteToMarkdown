@@ -1,11 +1,9 @@
-import os, sys, argparse
+import os, sys, argparse, json
 from shutil import copyfile
 from collections import defaultdict
 from pathlib import Path
 
-# Flag to give a prompt to push to git
-PUSH_TO_GIT_PROMPT = True
-AUTO_GENERATE_README = True
+# Getting the default path
 DEFAULT_PATH = str(Path.home()) + "/Documents"
 
 # Creates a parser for system arguments
@@ -13,7 +11,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dir", default=None, help="The directory where the program will run from the default path (currently \"{0}\")".format(DEFAULT_PATH))
 parser.add_argument("-f", "--fdir", default=None, help="The full directory to where the program will run")
 parser.add_argument("-q", "--quiet", action="store_true", help="Will not prompt if no tags are given or files are one line long.")
+parser.add_argument("-r", "--readme", action="store_true", help="Will autogenerate a README file if flag is set.")
+parser.add_argument("-p", "--push-to-git", action="store_true", help="Will automatically push to a GitHub repo.")
+
 args = parser.parse_args()
+
+AUTO_GENERATE_README = args.readme
+PUSH_TO_GIT_PROMPT = args.push_to_git
 
 # The full directory argument takes priority
 if args.fdir is not None:
@@ -25,10 +29,13 @@ elif args.dir is not None:
 else:
     directory = sys.path[0]
 
+folderNameDict = {}
+config = json.load(open(directory + "/boostnote.json"))
+for f in config["folders"]:
+    folderNameDict[f["key"]] = f["name"]
+
 # Default dict for storing the names of the folders and items
-filesInRepo = defaultdict(list)
-# Default tag is empty
-tag = ""
+filesInRepo = defaultdict(lambda: defaultdict(list))
 
 # Creates the directory if it doesn't already exist
 try:    os.mkdir(directory + "/markdown")
@@ -39,9 +46,13 @@ except FileExistsError: pass
 for root, dirs, files in os.walk(directory + "/notes"):
     # Iterating over all the filenames
     for filename in files:
+        # Default tag is empty
+        tag = ""
+
+
         # If the file is not a .cson file, we move on to the next file
         if ".cson" not in filename:
-            continue
+            continue    
 
         # Set the write flag to false until we reach the content
         write = False
@@ -56,6 +67,11 @@ for root, dirs, files in os.walk(directory + "/notes"):
                 # Remove weird new line stuff
                 line = line.strip()
 
+                if "folder: " in line:
+                    subFolder = folderNameDict[line[9:-1]] + "/"
+                    folderName += subFolder
+                    try:    os.mkdir(folderName)
+                    except FileExistsError: pass
                 # Get the outputname from the title and replace spaces with underscores
                 if "title: " in line:
                     outputName = line[8:-1].replace(" ", "_")
@@ -63,7 +79,7 @@ for root, dirs, files in os.walk(directory + "/notes"):
                 # Read the first tag as the subfolder
                 elif "tags" in line and "]" not in line:
                     tag = (file.readline().strip()[1:-1] + "/").replace(" ","_")
-                                    
+
                 # If the line starts with 'content: ' then the next block is what we need to write
                 elif "content: '''" in line:
                     # If the tag has not been set and the quiet flag has not been set, ask for a flag
@@ -72,23 +88,23 @@ for root, dirs, files in os.walk(directory + "/notes"):
                         tagQuery = input("File: \"{0}\" has no tag.\nDo you want to add a tag? [y/N]: ".format(outputName))
                         if tagQuery.lower() in ["y","yes"]:
                             # Get the tag from the user
-                            tag = input("Enter a tag: ") +  "/"    
-                    # Appenf the tag to the folder name
-                    folderName += tag    
+                            tag = input("Enter a tag: ") + "/"
+                    # Append the tag to the folder name
+                    folderName += tag
 
                     # Create the subfolder if it doesn't exist
                     try: os.mkdir(folderName)
                     # If the file exists, nothing needs to be done
-                    except FileExistsError: pass  
+                    except FileExistsError: pass
 
                     # Create a file and open it
                     output = open(folderName + outputName + ".md","w")
 
                     # Add the file to the directory listing
-                    if folderName != directory + "/markdown/":
-                        filesInRepo[folderName[len(directory + "/markdown/"):-1]].append(outputName)
+                    if tag != "":
+                        filesInRepo[subFolder[:-1]][tag[:-1]].append(outputName)
                     else:
-                        filesInRepo["Other_Files"].append(outputName)
+                        filesInRepo[subFolder[:-1]]["Other Files"].append(outputName)
                     # Set the write flag to be true
                     write = True
                     # Move on to the next line
@@ -101,16 +117,16 @@ for root, dirs, files in os.walk(directory + "/notes"):
                         output.close()
                     # Set the write flag to false
                     write = False
-                
+
                 # If there is only one line of content, let the user know it is not supported
                 elif "content: \"" in line and not args.quiet:
                     print("[NOTE] Single line files are not supported. File is:", outputName)
-                
+
                 # the write flag is true, write the line to the output
                 if write:
                     # there is an embeded image
                     if ":storage/" in line:
-                        
+
                         # Create a src directory for storing images
                         try: os.mkdir(directory + "/markdown/src")
                         # If the directory already exists, nothing needs to be done
@@ -132,6 +148,7 @@ for root, dirs, files in os.walk(directory + "/notes"):
                     # If there are no files embeded on the line, just write it to the output
                     else:   output.write(line + "  \n")
 
+
 # Check to see if the readme flag is true
 if AUTO_GENERATE_README:
     # Create the readme file
@@ -139,19 +156,35 @@ if AUTO_GENERATE_README:
         # Write the title
         README.write("# Folders  \n")
         # Iterate over all the folders and items that will be uploaded
-        for folder, items in filesInRepo.items():
-            # Write the subheading
+        for folder, subfolder in sorted(filesInRepo.items()):
             README.write("  \n## {0}  \n".format(folder))
-            # Write the filenames as links
-            for name in sorted(items):
-                README.write("- [{0}](./{1}/{0})  \n".format(name, folder) if folder != "Other_Files" else "- [{0}](./{0})  \n".format(name))
+            for tag, items in sorted(subfolder.items()):
+                README.write("  \n### {0}  \n".format(tag))
+                for name in sorted(items):
+                    README.write("- [{0}](./{1}/{2}/{0}.md)  \n".format(name, folder, tag) if tag != "Other Files" else "- [{0}](./{1}/{0}.md)  \n".format(name, folder))
 
 # If the user wants to push to git
 if PUSH_TO_GIT_PROMPT:
-    # Check the user actually wants to push to git
-    pushQuery = input("Do you want to push to github repo? [y/N]: ")
-    if pushQuery.lower() in ["y","yes"]:
-        # Get a commit message from the user
-        message = input("Enter a commit message: ")
-        # cd into the directory, add all the files, commit with the specified message, and push
-        os.system("cd {0}/markdown;git add .;git commit -m \"{1}\";git push".format(directory, message))
+    if not os.path.exists(directory + "/markdown/.git"):
+        createRepoQuery = input(directory + "/markdown Is not a GitHub repo, do you want to initalise one? [y/N]: ")
+        if createRepoQuery.lower() in ["y", "yes"]:
+            username = input("Enter your GitHub username: ")
+            reponame = input("Enter the name of the repo to link to: ")
+            message = input("Enter a commit message: ")
+
+            os.system("cd {0}/markdown;git init;git remote add origin git@github.com:{1}/{2}.git;git add .;git commit -m \"{3}\";git push --set-upstream origin master".format(
+                directory, username, reponame, message))
+
+        # git init
+        # git remote add origin git@github.com:[USERNAME]/[REPONAME].git
+        # git add .
+        # git commit -m [MESSAGE]
+        # git push --set-upstream origin master
+    else:
+        # Check the user actually wants to push to git
+        pushQuery = input("Do you want to push to GitHub? [y/N]: ")
+        if pushQuery.lower() in ["y","yes"]:
+            # Get a commit message from the user
+            message = input("Enter a commit message: ")
+            # cd into the directory, add all the files, commit with the specified message, and push
+            os.system("cd {0}/markdown;git add .;git commit -m \"{1}\";git push".format(directory, message))
