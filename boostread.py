@@ -3,9 +3,14 @@ from shutil import copyfile
 from collections import defaultdict
 from pathlib import Path
 
-# Getting the default path
+
+def alphanumKey(key):
+    return [int(c) if c.isdigit() else c for c in re.split('([0-9]+)', key)]
+
+# Flag to give a prompt to push to git
+PUSH_TO_GIT_PROMPT = True
+AUTO_GENERATE_README = True
 DEFAULT_PATH = str(Path.home()) + "/Documents"
-DEFAULT_TAG = "\0"*100
 
 
 # Creates a parser for system arguments
@@ -13,13 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--dir", default=None, help="The directory where the program will run from the default path (currently \"{0}\")".format(DEFAULT_PATH))
 parser.add_argument("-f", "--fdir", default=None, help="The full directory to where the program will run")
 parser.add_argument("-q", "--quiet", action="store_true", help="Will not prompt if no tags are given or files are one line long.")
-parser.add_argument("-r", "--readme", action="store_true", help="Will autogenerate a README file if flag is set.")
-parser.add_argument("-p", "--push-to-git", action="store_true", help="Will automatically push to a GitHub repo.")
-
 args = parser.parse_args()
-
-AUTO_GENERATE_README = args.readme
-PUSH_TO_GIT_PROMPT = args.push_to_git
 
 # The full directory argument takes priority
 if args.fdir is not None:
@@ -30,7 +29,6 @@ elif args.dir is not None:
 # If no directory tags are given, use the path for the program
 else:
     directory = sys.path[0]
-
 
 # Create a dictionary to find the folder names
 folderNameDict = {}
@@ -113,11 +111,10 @@ for root, dirs, files in os.walk(directory + "/notes"):
 
                     # Add the file to the directory listing
                     if tag != "":
-
-                        # If the tag is set
+                        # If the tag isbt
                         filesInRepo[subFolder[:-1]][tag[:-1]].append(outputName)
                     else:
-                        filesInRepo[subFolder[:-1]][DEFAULT_TAG].append(outputName)
+                        filesInRepo[subFolder[:-1]]["Other Files"].append(outputName)
                     # Set the write flag to be true
                     write = True
                     # Move on to the next line
@@ -157,7 +154,7 @@ for root, dirs, files in os.walk(directory + "/notes"):
                         # Copy the file to the markdown/src folder
                         copyfile(src, dst)
                         # Editing the embed reference to be relative to the file 
-                        output.write(line[:emebededStart-8] + ("../../src" if tag != "" else "../src") + line[embededEnd:] + "  \n")
+                        output.write(line[:emebededStart-8] + "../src" + line[embededEnd:] + "  \n")
                     # If there are no files embeded on the line, just write it to the output
                     else:   output.write(line + "  \n")
 
@@ -169,15 +166,12 @@ if AUTO_GENERATE_README:
         # Write the title
         README.write("# Folders  \n")
         # Iterate over all the folders and items that will be uploaded
-        for folder, subfolder in sorted(filesInRepo.items()):
+        for folder, subfolder in sorted(filesInRepo.items(), key=alphanumKey):
             README.write("  \n## {0}  \n".format(folder))
-            for tag, items in sorted(subfolder.items()):
-                if tag != DEFAULT_TAG:  
-                    README.write("  \n### {0}  \n".format(tag))
-                else:
-                    README.write("  \n###  \n")
-                for name in sorted(items):
-                    README.write("- [{0}](./{1}/{2}/{0}.md)  \n".format(name, folder, tag) if tag != DEFAULT_TAG else "- [{0}](./{1}/{0}.md)  \n".format(name, folder))
+            for tag, items in sorted(subfolder.items(), key=alphanumKey):
+                README.write("  \n### {0}  \n".format(tag))
+                for name in sorted(items, key=alphanumKey):
+                    README.write("- [{0}](./{1}/{2}/{0}.md)  \n".format(name, folder, tag) if tag != "Other Files" else "- [{0}](./{1}/{0}.md)  \n".format(name, folder))
 
 # If the user wants to push to git
 if PUSH_TO_GIT_PROMPT:
