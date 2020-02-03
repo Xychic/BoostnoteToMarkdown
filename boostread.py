@@ -173,9 +173,9 @@ if AUTO_GENERATE_README:
         # Write the title
         README.write("# Folders  \n")
         # Iterate over all the folders and items that will be uploaded
-        for folder, subfolder in sorted(filesInRepo.items(), key=alphanumKey):
+        for folder, subfolder in sorted(filesInRepo.items(), key=lambda x: alphanumKey(x[0])):
             README.write("  \n## {0}  \n".format(folder))
-            for tag, items in sorted(subfolder.items(), key=alphanumKey):
+            for tag, items in sorted(subfolder.items(), key=lambda x: alphanumKey(x[0])):
                 if tag != DEFAULT_TAG:  
                     README.write("  \n### {0}  \n".format(tag))
                 else:
