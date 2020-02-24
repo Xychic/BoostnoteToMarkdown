@@ -73,13 +73,15 @@ for root, dirs, files in os.walk(directory + "/notes"):
         # Open the file and interate over the lines
         with open(directory + "/notes/" + filename,"r") as file:
             for line in file:
-                # Remove weird new line stuff
-                line = line.strip()
+                # Fully stripped to get the parameters and end stripped for content
+                lineStr = line.strip()
+                line = line.strip("\n")[2:]
+
 
                 # Get the folder in which to store the note
-                if "folder: " in line:
+                if "folder: " in lineStr:
                     # Store the subfolder name
-                    subFolder = folderNameDict[line[9:-1]] + "/"
+                    subFolder = folderNameDict[lineStr[9:-1]] + "/"
                     # Add the foldername to the path
                     folderName += subFolder
                     # Create the folder if it doesn't exist
@@ -88,15 +90,15 @@ for root, dirs, files in os.walk(directory + "/notes"):
                     except FileExistsError: pass
 
                 # Get the outputname from the title and replace spaces with underscores
-                if "title: " in line:
-                    outputName = line[8:-1].replace(" ", "_")
+                if "title: " in lineStr:
+                    outputName = lineStr[8:-1].replace(" ", "_")
 
                 # Read the first tag as the subfolder
-                elif "tags" in line and "]" not in line:
+                elif "tags" in lineStr and "]" not in lineStr:
                     tag = (file.readline().strip()[1:-1] + "/").replace(" ","_")
 
                 # If the line starts with 'content: ' then the next block is what we need to write
-                elif "content: '''" in line:
+                elif "content: '''" in lineStr:
                     # If the tag has not been set and the quiet flag has not been set, ask for a flag
                     if tag == "" and not args.quiet:
                         # Ask the user if they want to add a flag
@@ -128,7 +130,7 @@ for root, dirs, files in os.walk(directory + "/notes"):
                     continue
 
                 # The end of the write block with be denoted by three '
-                elif line[:3] == "'''":
+                elif lineStr[:3] == "'''":
                     # Close the file if it was opened
                     if write:
                         output.close()
@@ -136,13 +138,13 @@ for root, dirs, files in os.walk(directory + "/notes"):
                     write = False
 
                 # If there is only one line of content, let the user know it is not supported
-                elif "content: \"" in line and not args.quiet:
+                elif "content: \"" in lineStr and not args.quiet:
                     print("[NOTE] Single line files are not supported. File is:", outputName)
 
                 # the write flag is true, write the line to the output
                 if write:
                     # there is an embeded image
-                    if ":storage/" in line:
+                    if ":storage/" in lineStr:
 
                         # Create a src directory for storing images
                         try: os.mkdir(directory + "/markdown/src")
@@ -151,17 +153,17 @@ for root, dirs, files in os.walk(directory + "/notes"):
 
                         # Creating values to store the start and the end of the image reference
                         emebededStart = 0
-                        embededEnd = len(line)-1
+                        embededEnd = len(lineStr)-1
                         # Move up or down the line until reaching the start or end of the reference
-                        while line[emebededStart] != "/":  emebededStart+=1
-                        while line[embededEnd] != "/":   embededEnd-=1
+                        while lineStr[emebededStart] != "/":  emebededStart+=1
+                        while lineStr[embededEnd] != "/":   embededEnd-=1
                         # Get the source and destination directories for the file to be embeded
-                        src = directory + "/attachments/" + line[emebededStart+1:-1]
-                        dst = directory + "/markdown/src" + line[embededEnd:-1]
+                        src = directory + "/attachments/" + lineStr[emebededStart+1:-1]
+                        dst = directory + "/markdown/src" + lineStr[embededEnd:-1]
                         # Copy the file to the markdown/src folder
                         copyfile(src, dst)
                         # Editing the embed reference to be relative to the file 
-                        output.write(line[:emebededStart-8] + ("../../src" if tag != "" else "../src") + line[embededEnd:] + "  \n")
+                        output.write(lineStr[:emebededStart-8] + ("../../src" if tag != "" else "../src") + lineStr[embededEnd:] + "  \n")
                     # If there are no files embeded on the line, just write it to the output
                     else:   output.write(line + "  \n")
 
