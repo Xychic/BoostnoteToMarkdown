@@ -95,7 +95,7 @@ for root, dirs, files in os.walk(directory + "/markdown"):
                     img = lineStr
                     while img[1] != "(":
                         img = img[1:]
-                    src = directory + img[2:-1].replace("../..", "/markdown")
+                    src = directory + img[2:-1].replace(target[-3:], "/markdown")
                     dst = directory + "/attachments/{0}/{1}".format(filename[:-3], src.split("/")[-1]) 
                     # print(src, dst)
                     copyfile(src, dst)
