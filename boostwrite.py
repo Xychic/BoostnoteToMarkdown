@@ -53,6 +53,9 @@ try:    os.mkdir(directory + "/attachments")
 # If the file exists, nothing needs to be done
 except FileExistsError: pass
 
+target = "../../src" if TAGS else "../src"
+
+
 
 # Walking over the directory
 for root, dirs, files in os.walk(directory + "/markdown"):
@@ -85,7 +88,7 @@ for root, dirs, files in os.walk(directory + "/markdown"):
             for line in file:
                 # Fully stripped to get the parameters and end stripped for content
                 lineStr = line.replace("  \n", "")
-                if "../../src" in lineStr:
+                if target in lineStr:
                     try:    os.mkdir(directory + "/attachments/{0}".format(filename[:-3]))
                     except FileExistsError: pass
 
@@ -96,7 +99,7 @@ for root, dirs, files in os.walk(directory + "/markdown"):
                     dst = directory + "/attachments/{0}/{1}".format(filename[:-3], src.split("/")[-1]) 
                     # print(src, dst)
                     copyfile(src, dst)
-                    lineStr = lineStr.replace("../../src", ":storage/{0}".format(filename[:-3]))
+                    lineStr = lineStr.replace(target, ":storage/{0}".format(filename[:-3]))
 
                 out.write("  " + lineStr + "\n")
 
