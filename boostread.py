@@ -52,16 +52,20 @@ try:    os.mkdir(directory + "/markdown")
 # If the file exists, nothing needs to be done
 except FileExistsError: pass
 
+try:    os.mkdir(directory + "/markdown/raw")
+except FileExistsError: pass
+
 # Walking over the directory
 for root, dirs, files in os.walk(directory + "/notes"):
     # Iterating over all the filenames
     for filename in files:
         # Default tag is empty
         tag = ""
-
         # If the file is not a .cson file, we move on to the next file
         if ".cson" not in filename:
             continue    
+
+        copyfile(root + "/" + filename, directory + "/markdown/raw/" + filename)
 
         # Set the write flag to false until we reach the content
         write = False
