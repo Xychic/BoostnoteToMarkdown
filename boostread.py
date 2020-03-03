@@ -19,11 +19,13 @@ parser.add_argument("-f", "--fdir", default=None, help="The full directory to wh
 parser.add_argument("-q", "--quiet", action="store_true", help="Will not prompt if no tags are given or files are one line long.")
 parser.add_argument("-r", "--readme", action="store_true", help="Will autogenerate a README file if flag is set.")
 parser.add_argument("-p", "--push-to-git", action="store_true", help="Will automatically push to a GitHub repo.")
+parser.add_argument("-R", "--raw", action="store_true", help="Will bundle in the raw .cson files if pushing to GitHub")
 
 args = parser.parse_args()
 
 AUTO_GENERATE_README = args.readme
 PUSH_TO_GIT_PROMPT = args.push_to_git
+BUNDLE_RAW = args.raw
 
 # The full directory argument takes priority
 if args.fdir is not None:
@@ -52,10 +54,11 @@ try:    os.mkdir(directory + "/markdown")
 # If the file exists, nothing needs to be done
 except FileExistsError: pass
 
-# Creates the directory if it doesn't already exist
-try:    os.mkdir(directory + "/markdown/raw")
-# If the file exists, nothing needs to be done
-except FileExistsError: pass
+if BUNDLE_RAW and PUSH_TO_GIT_PROMPT:
+    # Creates the directory if it doesn't already exist
+    try:    os.mkdir(directory + "/markdown/raw")
+    # If the file exists, nothing needs to be done
+    except FileExistsError: pass
 
 # Walking over the directory
 for root, dirs, files in os.walk(directory + "/notes"):
@@ -67,11 +70,12 @@ for root, dirs, files in os.walk(directory + "/notes"):
         if ".cson" not in filename:
             continue    
 
-        # Creates a symbolic link to the raw .cson files in the markdown directory
-        subprocess.run(["ln", "-f", 
-            root + "/" + filename, 
-            directory + "/markdown/raw/" + filename
-        ])
+        if BUNDLE_RAW and PUSH_TO_GIT_PROMPT:
+            # Creates a symbolic link to the raw .cson files in the markdown directory
+            subprocess.run(["ln", "-f", 
+                root + "/" + filename, 
+                directory + "/markdown/raw/" + filename
+            ])
 
         # Set the write flag to false until we reach the content
         write = False
