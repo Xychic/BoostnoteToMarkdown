@@ -1,4 +1,4 @@
-import os, sys, argparse, json, re
+import os, sys, argparse, json, re, subprocess
 from shutil import copyfile
 from collections import defaultdict
 from pathlib import Path
@@ -52,7 +52,9 @@ try:    os.mkdir(directory + "/markdown")
 # If the file exists, nothing needs to be done
 except FileExistsError: pass
 
+# Creates the directory if it doesn't already exist
 try:    os.mkdir(directory + "/markdown/raw")
+# If the file exists, nothing needs to be done
 except FileExistsError: pass
 
 # Walking over the directory
@@ -65,7 +67,11 @@ for root, dirs, files in os.walk(directory + "/notes"):
         if ".cson" not in filename:
             continue    
 
-        copyfile(root + "/" + filename, directory + "/markdown/raw/" + filename)
+        # Creates a symbolic link to the raw .cson files in the markdown directory
+        subprocess.run(["ln", "-f", 
+            root + "/" + filename, 
+            directory + "/markdown/raw/" + filename
+        ])
 
         # Set the write flag to false until we reach the content
         write = False
