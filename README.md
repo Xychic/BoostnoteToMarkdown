@@ -13,7 +13,7 @@ Simply run this program in the directory containing the "notes" folder containin
 -f --fdir   Used to specify the full path to the directory where the notes folder is, overwrites whatever is set by -d/--dir  
 -q --quiet  Used to supress warnings about single line files and notes without flags  
 -r --readme     If set will auto-generate a README file with relative links to each file  
--p --push-to-git    If set will push to a linked GitHub repo or show a prompt to link to an existing repository  #
+-p --push-to-git    If set will push to a linked GitHub repo or show a prompt to link to an existing repository  
 -R --raw  Will bundle in the raw .cson files if pushing to GitHub
   
 ## Setting up GitHub integration  
