@@ -210,8 +210,9 @@ if PUSH_TO_GIT_PROMPT:
             reponame = input("Enter the name of the repo to link to: ")
             message = input("Enter a commit message: ")
 
-            os.system("cd {0}/markdown;git init;git remote add origin git@github.com:{1}/{2}.git;git add .;git commit -m \"{3}\";git push --set-upstream origin master".format(
+            os.system("cd {0}/markdown;git init;git remote add origin git@github.com:{1}/{2}.git;git add .; git rm --cached -r raw; git commit -m \"{3}\";git push -u origin master".format(
                 directory, username, reponame, message))
+            if BUNDLE_RAW:  os.system("cd {0}/markdown;git checkout -b backup; git add .; git commit -m \"{1}\"; git push -u origin backup".format(directory, message))
 
         # git init
         # git remote add origin git@github.com:[USERNAME]/[REPONAME].git
@@ -225,4 +226,5 @@ if PUSH_TO_GIT_PROMPT:
             # Get a commit message from the user
             message = input("Enter a commit message: ")
             # cd into the directory, add all the files, commit with the specified message, and push
-            os.system("cd {0}/markdown;git add .;git commit -m \"{1}\";git push".format(directory, message))
+            os.system("cd {0}/markdown;git checkout -b master; git add .; git rm --cached -r raw; git commit -m \"{1}\"; git push -u master".format(directory, message))
+            if BUNDLE_RAW:  os.system("cd {0}/markdown;git checkout -b backup; git add .; git commit -m \"{1}\"; git push -u origin backup".format(directory, message))
