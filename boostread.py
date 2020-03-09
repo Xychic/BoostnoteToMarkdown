@@ -226,5 +226,5 @@ if PUSH_TO_GIT_PROMPT:
             # Get a commit message from the user
             message = input("Enter a commit message: ")
             # cd into the directory, add all the files, commit with the specified message, and push
-            os.system("cd {0}/markdown;git checkout -b master; git add .; git rm --cached -r raw; git commit -m \"{1}\"; git push -u origin master".format(directory, message))
+            os.system("cd {0}/markdown;git checkout -b master; git add *[^raw]; git commit -m \"{1}\"; git push -u origin master".format(directory, message))
             if BUNDLE_RAW:  os.system("cd {0}/markdown;git checkout -b backup; git add .; git commit -m \"{1}\"; git push -u origin backup".format(directory, message))
