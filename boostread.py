@@ -19,7 +19,7 @@ parser.add_argument("-f", "--fdir", default=None, help="The full directory to wh
 parser.add_argument("-q", "--quiet", action="store_true", help="Will not prompt if no tags are given or files are one line long.")
 parser.add_argument("-r", "--readme", action="store_true", help="Will autogenerate a README file if flag is set.")
 parser.add_argument("-p", "--push-to-git", action="store_true", help="Will automatically push to a GitHub repo.")
-parser.add_argument("-R", "--raw", action="store_true", help="Will bundle in the raw .cson files if pushing to GitHub")
+parser.add_argument("-R", "--raw", action="store_true", help="Will bundle in the raw .cson files, and if pushing to GitHub, will place them in a backup branch")
 
 args = parser.parse_args()
 
@@ -203,13 +203,17 @@ if AUTO_GENERATE_README:
 
 # If the user wants to push to git
 if PUSH_TO_GIT_PROMPT:
+    # If no git repository exists
     if not os.path.exists(directory + "/markdown/.git"):
+        # Ask the user if they want to intialise a git repo
         createRepoQuery = input(directory + "/markdown Is not a GitHub repo, do you want to initalise one? [y/N]: ")
         if createRepoQuery.lower() in ["y", "yes"]:
+            # Get required information to link to GitHub
             username = input("Enter your GitHub username: ")
             reponame = input("Enter the name of the repo to link to: ")
             message = input("Enter a commit message: ")
 
+            # cd into directory, initialise git repo, connect to remote, add files to master branch, and push
             os.system("cd {0}/markdown; git init; git remote add origin git@github.com:{1}/{2}.git; git add *[^raw]; git commit -m \"{3}\"; git push -u origin master".format(
                 directory, username, reponame, message))
             if BUNDLE_RAW:  os.system("cd {0}/markdown; git checkout -b backup; git add .; git commit -m \"{1}\"; git push -u origin backup".format(directory, message))
@@ -226,5 +230,13 @@ if PUSH_TO_GIT_PROMPT:
             # Get a commit message from the user
             message = input("Enter a commit message: ")
             # cd into the directory, add all the files, commit with the specified message, and push
-            os.system("cd {0}/markdown; git checkout -b master; git add *[^raw]; git commit -m \"{1}\"; git push -u origin master".format(directory, message))
-            if BUNDLE_RAW:  os.system("cd {0}/markdown; git checkout -b backup; git add .; git commit -m \"{1}\"; git push -u origin backup".format(directory, message))
+            os.system("cd {0}/markdown; git checkout master; git add *[^raw]; git commit -m \"{1}\"; git push -u origin master".format(directory, message))
+            
+            # If the raw .cson files are being bundled
+            if BUNDLE_RAW:  
+                # Check to see if the backup branch has been created
+                if "backup" not in subprocess.check_output(["git", "branch"], cwd="{0}/markdown".format(directory), text=True):    
+                    # Create the branch if necessary
+                    subprocess.run(["git", "branch", "backup"], cwd="{0}/markdown".format(directory))
+                # Add all the files to the backup branch
+                os.system("cd {0}/markdown; git checkout backup; git add .; git commit -m \"{1}\"; git push -u origin backup".format(directory, message))
